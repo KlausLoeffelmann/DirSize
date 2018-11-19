@@ -12,6 +12,8 @@ namespace DirSize
 {
     public partial class MainForm : Form
     {
+        private ToolStripButton _lastCheckedItem;
+
         public MainForm()
         {
             InitializeComponent();
@@ -19,6 +21,34 @@ namespace DirSize
             folderListView.GridLines = true;
             folderListView.HideSelection = false;
             folderListView.FullRowSelect = true;
+
+            folderListView.Columns.Add(new ColumnHeader()
+            {
+                Text = "Name",
+                Width = -2,
+                TextAlign = HorizontalAlignment.Left
+            });
+
+            folderListView.Columns.Add(new ColumnHeader()
+            {
+                Text = "Date modified",
+                Width = -2,
+                TextAlign = HorizontalAlignment.Left
+            });
+
+            folderListView.Columns.Add(new ColumnHeader()
+            {
+                Text = "Type",
+                Width = -2,
+                TextAlign = HorizontalAlignment.Left
+            });
+
+            folderListView.Columns.Add(new ColumnHeader()
+            {
+                Text = "Size",
+                Width = -2,
+                TextAlign = HorizontalAlignment.Left
+            });
         }
 
         protected override void OnLoad(EventArgs e)
@@ -30,9 +60,10 @@ namespace DirSize
                                                      System.Drawing.FontStyle.Bold,
                                                      System.Drawing.GraphicsUnit.Point);
 
+            var first = false;
+
             foreach (var driveItem in IoEnumService.GetDrives())
             {
-                var first = false;
                 var tsButton = new ToolStripButton
                 {
                     Font = buttonFont,
@@ -43,12 +74,13 @@ namespace DirSize
                     TextImageRelation = System.Windows.Forms.TextImageRelation.Overlay,
                     CheckOnClick = true
                 };
-                tsButton.CheckedChanged += new EventHandler(this.DriveButton_Click);
+                tsButton.Click += new EventHandler(this.DriveButton_Click);
+                tsButton.CheckedChanged += new EventHandler(this.DriveButton_CheckChanged);
                 tsButton.Tag = driveItem;
                 if (!first)
                 {
                     first = true;
-                    toolStrip1.BeginInvoke(new Action(() => tsButton.CheckState = CheckState.Checked));
+                    tsButton.PerformClick();
                 }
                 toolStrip1.Items.Add(tsButton);
             }
@@ -56,8 +88,19 @@ namespace DirSize
 
         public IIoEnumService IoEnumService { get; set; }
 
+        private void DriveButton_CheckChanged(object sender, EventArgs e)
+        {
+            if (_lastCheckedItem!=null)
+            {
+                _lastCheckedItem.CheckState = CheckState.Unchecked;
+            }
+            _lastCheckedItem = sender as ToolStripButton;
+        }
+
         private async void DriveButton_Click(object sender, EventArgs e)
         {
+            folderListView.Items.Clear();
+
             Action toogleButtons = new Action(() =>
               {
                   foreach (var item in toolStrip1.Items)
@@ -69,12 +112,34 @@ namespace DirSize
                   }
               });
 
-            var resultList = IoEnumService.GetFilesAndDirs(((DriveInfo)((ToolStripButton)sender).Tag).Name).ToList();
+            var resultList = (from ioItem in IoEnumService.GetFilesAndDirs(((DriveInfo)((ToolStripButton)sender).Tag).Name)
+                              orderby ioItem.IsFolder descending,
+                                      ioItem.Name
+                              select ioItem).ToList();
+
             foreach (var item in resultList)
             {
-                folderListView.Items.Add(item.Path);
+                var listViewItem = new ListViewItem(new string[]{
+                    item.Name,
+                    item.DateModified.ToString("yyyy-mm-dd HH:mm:ss"),
+                    item.IsFolder ? "File Folder" : "File",
+                    item.Size.HasValue ?
+                        item.Size.Value.ToString("#,###") :
+                        "- - -"});
+                listViewItem.Tag = item;
+                folderListView.Items.Add(listViewItem);
             }
-            await Task.Delay(0);
+
+            foreach (ColumnHeader columnHeader in folderListView.Columns)
+            {
+                columnHeader.Width = -1;
+            }
+            var ioItemTemp = (SimpleIoItemInfoStructure)folderListView.Items[0].Tag;
+            var folderSize = await Task.Run(() => IoEnumService.GetFolderSizeRecursive(ioItemTemp.Path, 
+                                                   (value) => 
+                                                   {
+                                                       statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text=value.ToString() ));
+                                                   }));
         }
     }
 }

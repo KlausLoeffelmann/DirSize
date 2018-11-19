@@ -30,11 +30,12 @@
         {
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.folderListView = new System.Windows.Forms.ListView();
-            this.panel1 = new System.Windows.Forms.Panel();
             this.diveLetterStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.freeSpaceStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.totalBytesCapacityStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.folderListView = new System.Windows.Forms.ListView();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.InfoItemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -55,32 +56,14 @@
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.diveLetterStatusLabel,
             this.freeSpaceStatusLabel,
-            this.totalBytesCapacityStatusLabel});
+            this.totalBytesCapacityStatusLabel,
+            this.InfoItemStatusLabel});
             this.statusStrip1.Location = new System.Drawing.Point(31, 659);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 10, 0);
             this.statusStrip1.Size = new System.Drawing.Size(959, 30);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
-            // 
-            // folderListView
-            // 
-            this.folderListView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.folderListView.HideSelection = false;
-            this.folderListView.Location = new System.Drawing.Point(31, 60);
-            this.folderListView.Name = "folderListView";
-            this.folderListView.Size = new System.Drawing.Size(959, 629);
-            this.folderListView.TabIndex = 2;
-            this.folderListView.UseCompatibleStateImageBehavior = false;
-            // 
-            // panel1
-            // 
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel1.Location = new System.Drawing.Point(5, 5);
-            this.panel1.Margin = new System.Windows.Forms.Padding(2);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(985, 55);
-            this.panel1.TabIndex = 3;
             // 
             // diveLetterStatusLabel
             // 
@@ -101,6 +84,31 @@
             this.totalBytesCapacityStatusLabel.Name = "totalBytesCapacityStatusLabel";
             this.totalBytesCapacityStatusLabel.Size = new System.Drawing.Size(230, 25);
             this.totalBytesCapacityStatusLabel.Text = "-,---,--- total Bytes capacity.";
+            // 
+            // folderListView
+            // 
+            this.folderListView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.folderListView.HideSelection = false;
+            this.folderListView.Location = new System.Drawing.Point(31, 60);
+            this.folderListView.Name = "folderListView";
+            this.folderListView.Size = new System.Drawing.Size(959, 629);
+            this.folderListView.TabIndex = 2;
+            this.folderListView.UseCompatibleStateImageBehavior = false;
+            // 
+            // panel1
+            // 
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panel1.Location = new System.Drawing.Point(5, 5);
+            this.panel1.Margin = new System.Windows.Forms.Padding(2);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(985, 55);
+            this.panel1.TabIndex = 3;
+            // 
+            // InfoItemStatusLabel
+            // 
+            this.InfoItemStatusLabel.Name = "InfoItemStatusLabel";
+            this.InfoItemStatusLabel.Size = new System.Drawing.Size(179, 25);
+            this.InfoItemStatusLabel.Text = "toolStripStatusLabel1";
             // 
             // MainForm
             // 
@@ -131,5 +139,6 @@
         private System.Windows.Forms.ToolStripStatusLabel diveLetterStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel freeSpaceStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel totalBytesCapacityStatusLabel;
+        private System.Windows.Forms.ToolStripStatusLabel InfoItemStatusLabel;
     }
 }

@@ -11,6 +11,7 @@ namespace DirSize
         public string Path { get; set; }
         public long? Size { get; set; }
         public bool IsFolder { get; set; }
+        public DateTimeOffset DateModified { get; set; }
     }
 
     public interface IIoEnumService
@@ -19,7 +20,7 @@ namespace DirSize
 
         IEnumerable<SimpleIoItemInfoStructure> GetFilesAndDirs(string drive);
         IEnumerable<string> GetFilesAndDirsRecursive(string drive);
-        IEnumerable<string> GetFolderSize(string path);
-        IEnumerable<string> GetFolderSizeRecursive(string path);
+        long GetFolderSize(string path);
+        long GetFolderSizeRecursive(string path, Action<long> sumBuilderProgressCallBack);
     }
 }

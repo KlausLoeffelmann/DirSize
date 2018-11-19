@@ -20,7 +20,8 @@ namespace DirSize
                                                        IsFolder = entry.IsDirectory,
                                                        Name = entry.FileName.ToString(),
                                                        Path = entry.ToFullPath(),
-                                                       Size = entry.Length
+                                                       Size = entry.Length,
+                                                       DateModified = entry.LastWriteTimeUtc,
                                                    },
                                                    options)
             {
@@ -33,14 +34,31 @@ namespace DirSize
             throw new NotImplementedException();
         }
 
-        public IEnumerable<string> GetFolderSize(string path)
+        public long GetFolderSize(string path)
         {
             throw new NotImplementedException();
         }
 
-        public IEnumerable<string> GetFolderSizeRecursive(string path)
+        public long GetFolderSizeRecursive(string path, Action<long> sumBuilderProgressCallBack)
         {
-            throw new NotImplementedException();
+            long currentSum = 0;
+            long currentItem = 0;
+            var options = new EnumerationOptions() { RecurseSubdirectories = false };
+            return (new FileSystemEnumerable<long>(
+                    path,
+                    (ref FileSystemEntry entry) => {
+                        currentSum += entry.Length;
+                        if (currentItem++==100)
+                        {
+                            currentItem = 0;
+                            sumBuilderProgressCallBack.Invoke(currentSum);
+                        }
+                        return entry.Length;
+                    },
+                    new EnumerationOptions() { RecurseSubdirectories = true })
+            {
+                ShouldIncludePredicate = (ref FileSystemEntry entry) => !entry.IsDirectory
+            }).Sum();
         }
     }
 }

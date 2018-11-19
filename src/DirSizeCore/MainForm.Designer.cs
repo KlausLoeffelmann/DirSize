@@ -28,44 +28,38 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.folderListView = new System.Windows.Forms.ListView();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.toolStrip1.SuspendLayout();
+            this.diveLetterStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.freeSpaceStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.totalBytesCapacityStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // toolStrip1
             // 
             this.toolStrip1.Dock = System.Windows.Forms.DockStyle.Left;
             this.toolStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripButton1});
             this.toolStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.VerticalStackWithOverflow;
-            this.toolStrip1.Location = new System.Drawing.Point(0, 69);
+            this.toolStrip1.Location = new System.Drawing.Point(5, 60);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(54, 776);
+            this.toolStrip1.Size = new System.Drawing.Size(26, 629);
             this.toolStrip1.TabIndex = 0;
             this.toolStrip1.Text = "toolStrip1";
-            // 
-            // toolStripButton1
-            // 
-            this.toolStripButton1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(51, 49);
-            this.toolStripButton1.Text = "C:";
-            this.toolStripButton1.TextImageRelation = System.Windows.Forms.TextImageRelation.Overlay;
             // 
             // statusStrip1
             // 
             this.statusStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
-            this.statusStrip1.Location = new System.Drawing.Point(0, 845);
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.diveLetterStatusLabel,
+            this.freeSpaceStatusLabel,
+            this.totalBytesCapacityStatusLabel});
+            this.statusStrip1.Location = new System.Drawing.Point(31, 659);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(1327, 22);
+            this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 10, 0);
+            this.statusStrip1.Size = new System.Drawing.Size(959, 30);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -73,33 +67,56 @@
             // 
             this.folderListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.folderListView.HideSelection = false;
-            this.folderListView.Location = new System.Drawing.Point(54, 69);
+            this.folderListView.Location = new System.Drawing.Point(31, 60);
             this.folderListView.Name = "folderListView";
-            this.folderListView.Size = new System.Drawing.Size(1273, 776);
+            this.folderListView.Size = new System.Drawing.Size(959, 629);
             this.folderListView.TabIndex = 2;
             this.folderListView.UseCompatibleStateImageBehavior = false;
             // 
             // panel1
             // 
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Location = new System.Drawing.Point(5, 5);
+            this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1327, 69);
+            this.panel1.Size = new System.Drawing.Size(985, 55);
             this.panel1.TabIndex = 3;
+            // 
+            // diveLetterStatusLabel
+            // 
+            this.diveLetterStatusLabel.BorderStyle = System.Windows.Forms.Border3DStyle.RaisedInner;
+            this.diveLetterStatusLabel.Font = new System.Drawing.Font("Segoe UI Black", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.diveLetterStatusLabel.Name = "diveLetterStatusLabel";
+            this.diveLetterStatusLabel.Size = new System.Drawing.Size(29, 25);
+            this.diveLetterStatusLabel.Text = "C:";
+            // 
+            // freeSpaceStatusLabel
+            // 
+            this.freeSpaceStatusLabel.Name = "freeSpaceStatusLabel";
+            this.freeSpaceStatusLabel.Size = new System.Drawing.Size(147, 25);
+            this.freeSpaceStatusLabel.Text = "-,---,--- Byte free.";
+            // 
+            // totalBytesCapacityStatusLabel
+            // 
+            this.totalBytesCapacityStatusLabel.Name = "totalBytesCapacityStatusLabel";
+            this.totalBytesCapacityStatusLabel.Size = new System.Drawing.Size(230, 25);
+            this.totalBytesCapacityStatusLabel.Text = "-,---,--- total Bytes capacity.";
             // 
             // MainForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1327, 867);
+            this.ClientSize = new System.Drawing.Size(995, 694);
+            this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.folderListView);
             this.Controls.Add(this.toolStrip1);
-            this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.panel1);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "MainForm";
+            this.Padding = new System.Windows.Forms.Padding(5);
             this.Text = "MainForm";
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -108,9 +125,11 @@
         #endregion
 
         private System.Windows.Forms.ToolStrip toolStrip1;
-        private System.Windows.Forms.ToolStripButton toolStripButton1;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ListView folderListView;
         private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.ToolStripStatusLabel diveLetterStatusLabel;
+        private System.Windows.Forms.ToolStripStatusLabel freeSpaceStatusLabel;
+        private System.Windows.Forms.ToolStripStatusLabel totalBytesCapacityStatusLabel;
     }
 }

@@ -46,6 +46,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\DirSizeCore\IIoEnumService.cs">
+      <Link>IIoEnumService.cs</Link>
+    </Compile>
     <Compile Include="..\DirSizeCore\MainForm.cs">
       <Link>MainForm.cs</Link>
       <SubType>Form</SubType>

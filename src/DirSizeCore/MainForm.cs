@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using System.Windows.Forms;
 
 namespace DirSize
@@ -13,6 +17,7 @@ namespace DirSize
     public partial class MainForm : Form
     {
         private ToolStripButton _lastCheckedItem;
+        private long _totalFolderBytes;
 
         public MainForm()
         {
@@ -124,9 +129,17 @@ namespace DirSize
                     item.DateModified.ToString("yyyy-mm-dd HH:mm:ss"),
                     item.IsFolder ? "File Folder" : "File",
                     item.Size.HasValue ?
-                        item.Size.Value.ToString("#,###") :
+                        item.Size.Value.ToString("#,##0") :
                         "- - -"});
                 listViewItem.Tag = item;
+
+                // Make sure, every SubItem.Tag contains of a initialized Tuple(Long, Long),
+                // so we do not need to test for null when casting it back from Tag.
+                foreach (ListViewItem.ListViewSubItem subItem in listViewItem.SubItems)
+                {
+                    subItem.Tag = (0L, 0L);
+                }
+
                 folderListView.Items.Add(listViewItem);
             }
 
@@ -134,12 +147,46 @@ namespace DirSize
             {
                 columnHeader.Width = -1;
             }
-            var ioItemTemp = (SimpleIoItemInfoStructure)folderListView.Items[0].Tag;
-            var folderSize = await Task.Run(() => IoEnumService.GetFolderSizeRecursive(ioItemTemp.Path, 
-                                                   (value) => 
-                                                   {
-                                                       statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text=value.ToString() ));
-                                                   }));
+
+            var totalFoldersProcessedUpdater = new Action<long>((additionallyUsedFolderBytes) =>
+            {
+                Interlocked.Add(ref _totalFolderBytes, additionallyUsedFolderBytes);
+                statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text = _totalFolderBytes.ToString()));
+            });
+
+            var blockAction = new Action<(ListViewItem lvItem, Action<long> updateAction)>((lvItemAndUpdater) =>
+              {
+                  var ioItemTemp = (SimpleIoItemInfoStructure)lvItemAndUpdater.lvItem.Tag;
+                  if (ioItemTemp.IsFolder)
+                  {
+                      var result = IoEnumService.GetFolderSizeRecursive(ioItemTemp.Path,
+                                    (value) =>
+                                    {
+                                        folderListView.BeginInvoke(
+                                            new Action(() =>
+                                            {
+                                                var itemSum = ((long elements, long usedBytes))lvItemAndUpdater.lvItem.SubItems[3].Tag;
+                                                itemSum.elements += value.additionalElementsCounted;
+                                                itemSum.usedBytes += value.additionalBytesUsed;
+                                                lvItemAndUpdater.lvItem.SubItems[3].Text = itemSum.ToString();
+                                                lvItemAndUpdater.lvItem.SubItems[3].Tag = itemSum;
+                                                lvItemAndUpdater.updateAction.Invoke(value.additionalBytesUsed);
+                                            }));
+                                    });
+                  }
+              });
+
+            var workerBlock = new ActionBlock<(ListViewItem, Action<long>)>(blockAction,
+                                               new ExecutionDataflowBlockOptions()
+                                               { MaxDegreeOfParallelism = 6 });
+
+            foreach (ListViewItem lvItem in folderListView.Items)
+            {
+                var status = await workerBlock.SendAsync((lvItem, totalFoldersProcessedUpdater));
+            }
+
+            workerBlock.Complete();
+            await workerBlock.Completion;
         }
     }
 }

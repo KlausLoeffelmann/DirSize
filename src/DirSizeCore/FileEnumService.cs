@@ -39,26 +39,32 @@ namespace DirSize
             throw new NotImplementedException();
         }
 
-        public long GetFolderSizeRecursive(string path, Action<long> sumBuilderProgressCallBack)
+        public (long totalElements, long totalBytesUsed) 
+            GetFolderSizeRecursive(string path, 
+                                   Action<(long additionalElementsCounted,long additionalBytesUsed)> sumBuilderProgressCallBack)
         {
-            long currentSum = 0;
-            long currentItem = 0;
+            long additionalBytes = 0;
+            long itemCount = 0;
             var options = new EnumerationOptions() { RecurseSubdirectories = false };
-            return (new FileSystemEnumerable<long>(
-                    path,
-                    (ref FileSystemEntry entry) => {
-                        currentSum += entry.Length;
-                        if (currentItem++==100)
-                        {
-                            currentItem = 0;
-                            sumBuilderProgressCallBack.Invoke(currentSum);
-                        }
-                        return entry.Length;
-                    },
-                    new EnumerationOptions() { RecurseSubdirectories = true })
-            {
-                ShouldIncludePredicate = (ref FileSystemEntry entry) => !entry.IsDirectory
-            }).Sum();
+
+            var totalBytesUsed = (new FileSystemEnumerable<long>(
+                                    path,
+                                    (ref FileSystemEntry entry) =>
+                                    {
+                                        additionalBytes += entry.Length;
+                                        if (itemCount++ % 100 == 0)
+                                        {
+                                            sumBuilderProgressCallBack.Invoke((100, additionalBytes));
+                                            additionalBytes = 0;
+                                        }
+                                        return entry.Length;
+                                    },
+                                    new EnumerationOptions() { RecurseSubdirectories = true })
+                                            {
+                                                ShouldIncludePredicate = (ref FileSystemEntry entry) => !entry.IsDirectory
+                                            }).Sum();
+
+            return (itemCount, totalBytesUsed);
         }
     }
 }

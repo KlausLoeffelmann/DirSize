@@ -21,6 +21,9 @@ namespace DirSize
         IEnumerable<SimpleIoItemInfoStructure> GetFilesAndDirs(string drive);
         IEnumerable<string> GetFilesAndDirsRecursive(string drive);
         long GetFolderSize(string path);
-        long GetFolderSizeRecursive(string path, Action<long> sumBuilderProgressCallBack);
+
+        (long totalElements, long totalBytesUsed) GetFolderSizeRecursive(
+            string path,
+            Action<(long additionalElementsCounted, long additionalBytesUsed)> sumBuilderProgressCallBack);
     }
 }

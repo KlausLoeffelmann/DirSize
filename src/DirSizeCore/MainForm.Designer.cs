@@ -36,7 +36,9 @@
             this.InfoItemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.folderListView = new System.Windows.Forms.ListView();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.currentPathLabel = new System.Windows.Forms.Label();
             this.statusStrip1.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -100,15 +102,28 @@
             this.folderListView.Size = new System.Drawing.Size(965, 646);
             this.folderListView.TabIndex = 2;
             this.folderListView.UseCompatibleStateImageBehavior = false;
+            this.folderListView.ItemActivate += new System.EventHandler(this.folderListView_ItemActivate);
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.currentPathLabel);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(5, 5);
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(991, 55);
             this.panel1.TabIndex = 3;
+            // 
+            // currentPathLabel
+            // 
+            this.currentPathLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.currentPathLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.currentPathLabel.Location = new System.Drawing.Point(0, 0);
+            this.currentPathLabel.Name = "currentPathLabel";
+            this.currentPathLabel.Size = new System.Drawing.Size(991, 55);
+            this.currentPathLabel.TabIndex = 0;
+            this.currentPathLabel.Text = "C:\\";
+            this.currentPathLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // MainForm
             // 
@@ -125,6 +140,7 @@
             this.Text = "DirSizeCore - Windows Forms .NET 3.0 Core Demo";
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -140,5 +156,6 @@
         private System.Windows.Forms.ToolStripStatusLabel freeSpaceStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel totalBytesCapacityStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel InfoItemStatusLabel;
+        private System.Windows.Forms.Label currentPathLabel;
     }
 }

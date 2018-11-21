@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ByteSizeLib;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,6 +19,8 @@ namespace DirSize
     {
         private ToolStripButton _lastCheckedItem;
         private long _totalFolderBytes;
+        private ActionBlock<(ListViewItem, Action<ByteSize>)> _workerBlock;
+        private CancellationTokenSource _workerBlockCancellationTokenSource = new CancellationTokenSource();
 
         public MainForm()
         {
@@ -51,6 +54,13 @@ namespace DirSize
             folderListView.Columns.Add(new ColumnHeader()
             {
                 Text = "Size",
+                Width = 100,
+                TextAlign = HorizontalAlignment.Left
+            });
+
+            folderListView.Columns.Add(new ColumnHeader()
+            {
+                Text = "File count",
                 Width = -2,
                 TextAlign = HorizontalAlignment.Left
             });
@@ -104,18 +114,22 @@ namespace DirSize
 
         private async void DriveButton_Click(object sender, EventArgs e)
         {
-            folderListView.Items.Clear();
+            // If we are in the middle of retrieving the folder sizes for the current list...
+            if (_workerBlock != null && !_workerBlock.Completion.IsCompleted)
+            {
+                // ...let's cancel all those running tasks.
+                _workerBlockCancellationTokenSource.Cancel();
+                _workerBlockCancellationTokenSource = new CancellationTokenSource();
+            }
 
-            Action toogleButtons = new Action(() =>
-              {
-                  foreach (var item in toolStrip1.Items)
-                  {
-                      if ((item is ToolStripButton tsItem))
-                      {
-                          tsItem.Enabled = tsItem.Enabled ^ tsItem.Tag != null;
-                      }
-                  }
-              });
+            folderListView.Items.Clear();
+            _totalFolderBytes = 0;
+            var driveInfo = (DriveInfo)((ToolStripButton)sender).Tag;
+
+            // Update StatusStrip
+            diveLetterStatusLabel.Text = driveInfo.Name;
+            freeSpaceStatusLabel.Text = $"{new ByteSize(driveInfo.TotalFreeSpace)} free on Drive.";
+            totalBytesCapacityStatusLabel.Text = $"{new ByteSize(driveInfo.TotalSize)} total Drive size.";
 
             var resultList = (from ioItem in IoEnumService.GetFilesAndDirs(((DriveInfo)((ToolStripButton)sender).Tag).Name)
                               orderby ioItem.IsFolder descending,
@@ -129,32 +143,36 @@ namespace DirSize
                     item.DateModified.ToString("yyyy-mm-dd HH:mm:ss"),
                     item.IsFolder ? "File Folder" : "File",
                     item.Size.HasValue ?
-                        item.Size.Value.ToString("#,##0") :
+                    item.Size.Value.ToString("#,##0") :
+                        "- - -",
+                    item.Count.HasValue?
+                        item.Count.Value.ToString("#,##0") :
                         "- - -"});
-                listViewItem.Tag = item;
+
+                    listViewItem.Tag = item;
 
                 // Make sure, every SubItem.Tag contains of a initialized Tuple(Long, Long),
                 // so we do not need to test for null when casting it back from Tag.
                 foreach (ListViewItem.ListViewSubItem subItem in listViewItem.SubItems)
                 {
-                    subItem.Tag = (0L, 0L);
+                    subItem.Tag = (0L, new ByteSize(0));
                 }
 
                 folderListView.Items.Add(listViewItem);
             }
 
-            foreach (ColumnHeader columnHeader in folderListView.Columns)
+            for (int columnCount = 0; columnCount < 3; columnCount++)
             {
-                columnHeader.Width = -1;
+                folderListView.Columns[columnCount].Width = -1;
             }
 
-            var totalFoldersProcessedUpdater = new Action<long>((additionallyUsedFolderBytes) =>
+            var totalFoldersProcessedUpdater = new Action<ByteSize>((additionallyUsedFolderBytes) =>
             {
-                Interlocked.Add(ref _totalFolderBytes, additionallyUsedFolderBytes);
-                statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text = _totalFolderBytes.ToString()));
+                Interlocked.Add(ref _totalFolderBytes, (long) additionallyUsedFolderBytes.Bytes);
+                statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text = $"Retrieving folder sizes: {new ByteSize(_totalFolderBytes)}"));
             });
 
-            var blockAction = new Action<(ListViewItem lvItem, Action<long> updateAction)>((lvItemAndUpdater) =>
+            var blockAction = new Action<(ListViewItem lvItem, Action<ByteSize> updateAction)>((lvItemAndUpdater) =>
               {
                   var ioItemTemp = (SimpleIoItemInfoStructure)lvItemAndUpdater.lvItem.Tag;
                   if (ioItemTemp.IsFolder)
@@ -162,31 +180,50 @@ namespace DirSize
                       var result = IoEnumService.GetFolderSizeRecursive(ioItemTemp.Path,
                                     (value) =>
                                     {
+                                        // We print out the progress for each folder, while we're retrieving the data.
                                         folderListView.BeginInvoke(
                                             new Action(() =>
                                             {
-                                                var itemSum = ((long elements, long usedBytes))lvItemAndUpdater.lvItem.SubItems[3].Tag;
+                                                var itemSum = ((long elements, ByteSize usedBytes))lvItemAndUpdater.lvItem.SubItems[3].Tag;
                                                 itemSum.elements += value.additionalElementsCounted;
                                                 itemSum.usedBytes += value.additionalBytesUsed;
-                                                lvItemAndUpdater.lvItem.SubItems[3].Text = itemSum.ToString();
+                                                lvItemAndUpdater.lvItem.SubItems[3].Text = itemSum.usedBytes.ToString();
+                                                lvItemAndUpdater.lvItem.SubItems[4].Text = itemSum.elements.ToString("#,##0");
                                                 lvItemAndUpdater.lvItem.SubItems[3].Tag = itemSum;
                                                 lvItemAndUpdater.updateAction.Invoke(value.additionalBytesUsed);
                                             }));
                                     });
+
+                      // We print out the result, once it's available.
+                      folderListView.BeginInvoke(
+                          new Action(() =>
+                          {
+                              lvItemAndUpdater.lvItem.SubItems[3].Text = result.totalBytesUsed.ToString();
+                              lvItemAndUpdater.lvItem.SubItems[4].Text = result.totalElements.ToString("#,##0");
+                          }));
                   }
               });
 
-            var workerBlock = new ActionBlock<(ListViewItem, Action<long>)>(blockAction,
-                                               new ExecutionDataflowBlockOptions()
-                                               { MaxDegreeOfParallelism = 6 });
+            _workerBlock = new ActionBlock<(ListViewItem, Action<ByteSize>)>(blockAction,
+                                            new ExecutionDataflowBlockOptions()
+                                            { MaxDegreeOfParallelism = 4,
+                                              CancellationToken=_workerBlockCancellationTokenSource.Token});
 
             foreach (ListViewItem lvItem in folderListView.Items)
             {
-                var status = await workerBlock.SendAsync((lvItem, totalFoldersProcessedUpdater));
+                var status = await _workerBlock.SendAsync((lvItem, totalFoldersProcessedUpdater));
             }
 
-            workerBlock.Complete();
-            await workerBlock.Completion;
+            _workerBlock.Complete();
+            try
+            {
+                await _workerBlock.Completion;
+                statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text = $"Done."));
+            }
+            catch (TaskCanceledException)
+            {
+                statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text = $"Canceled."));
+            }
         }
     }
 }

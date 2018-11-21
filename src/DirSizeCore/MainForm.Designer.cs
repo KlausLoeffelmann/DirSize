@@ -33,9 +33,9 @@
             this.diveLetterStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.freeSpaceStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.totalBytesCapacityStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.InfoItemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.folderListView = new System.Windows.Forms.ListView();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.InfoItemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -46,7 +46,7 @@
             this.toolStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.VerticalStackWithOverflow;
             this.toolStrip1.Location = new System.Drawing.Point(5, 60);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(26, 629);
+            this.toolStrip1.Size = new System.Drawing.Size(26, 646);
             this.toolStrip1.TabIndex = 0;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -58,10 +58,10 @@
             this.freeSpaceStatusLabel,
             this.totalBytesCapacityStatusLabel,
             this.InfoItemStatusLabel});
-            this.statusStrip1.Location = new System.Drawing.Point(31, 659);
+            this.statusStrip1.Location = new System.Drawing.Point(31, 676);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 10, 0);
-            this.statusStrip1.Size = new System.Drawing.Size(959, 30);
+            this.statusStrip1.Size = new System.Drawing.Size(965, 30);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -85,13 +85,19 @@
             this.totalBytesCapacityStatusLabel.Size = new System.Drawing.Size(230, 25);
             this.totalBytesCapacityStatusLabel.Text = "-,---,--- total Bytes capacity.";
             // 
+            // InfoItemStatusLabel
+            // 
+            this.InfoItemStatusLabel.Name = "InfoItemStatusLabel";
+            this.InfoItemStatusLabel.Size = new System.Drawing.Size(179, 25);
+            this.InfoItemStatusLabel.Text = "toolStripStatusLabel1";
+            // 
             // folderListView
             // 
             this.folderListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.folderListView.HideSelection = false;
             this.folderListView.Location = new System.Drawing.Point(31, 60);
             this.folderListView.Name = "folderListView";
-            this.folderListView.Size = new System.Drawing.Size(959, 629);
+            this.folderListView.Size = new System.Drawing.Size(965, 646);
             this.folderListView.TabIndex = 2;
             this.folderListView.UseCompatibleStateImageBehavior = false;
             // 
@@ -101,20 +107,14 @@
             this.panel1.Location = new System.Drawing.Point(5, 5);
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(985, 55);
+            this.panel1.Size = new System.Drawing.Size(991, 55);
             this.panel1.TabIndex = 3;
-            // 
-            // InfoItemStatusLabel
-            // 
-            this.InfoItemStatusLabel.Name = "InfoItemStatusLabel";
-            this.InfoItemStatusLabel.Size = new System.Drawing.Size(179, 25);
-            this.InfoItemStatusLabel.Text = "toolStripStatusLabel1";
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(995, 694);
+            this.ClientSize = new System.Drawing.Size(1001, 711);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.folderListView);
             this.Controls.Add(this.toolStrip1);
@@ -122,7 +122,7 @@
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "MainForm";
             this.Padding = new System.Windows.Forms.Padding(5);
-            this.Text = "MainForm";
+            this.Text = "DirSizeCore - Windows Forms .NET 3.0 Core Demo";
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ByteSizeLib;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Enumeration;
@@ -34,14 +35,14 @@ namespace DirSize
             throw new NotImplementedException();
         }
 
-        public long GetFolderSize(string path)
+        public ByteSize GetFolderSize(string path)
         {
             throw new NotImplementedException();
         }
 
-        public (long totalElements, long totalBytesUsed) 
+        public (long totalElements, ByteSize totalBytesUsed) 
             GetFolderSizeRecursive(string path, 
-                                   Action<(long additionalElementsCounted,long additionalBytesUsed)> sumBuilderProgressCallBack)
+                                   Action<(long additionalElementsCounted,ByteSize additionalBytesUsed)> sumBuilderProgressCallBack)
         {
             long additionalBytes = 0;
             long itemCount = 0;
@@ -54,7 +55,7 @@ namespace DirSize
                                         additionalBytes += entry.Length;
                                         if (itemCount++ % 100 == 0)
                                         {
-                                            sumBuilderProgressCallBack.Invoke((100, additionalBytes));
+                                            sumBuilderProgressCallBack.Invoke((100, new ByteSize(additionalBytes)));
                                             additionalBytes = 0;
                                         }
                                         return entry.Length;
@@ -64,7 +65,7 @@ namespace DirSize
                                                 ShouldIncludePredicate = (ref FileSystemEntry entry) => !entry.IsDirectory
                                             }).Sum();
 
-            return (itemCount, totalBytesUsed);
+            return (itemCount, new ByteSize(totalBytesUsed));
         }
     }
 }

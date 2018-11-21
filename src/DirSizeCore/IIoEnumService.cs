@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ByteSizeLib;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -10,6 +11,7 @@ namespace DirSize
         public string Name { get; set; }
         public string Path { get; set; }
         public long? Size { get; set; }
+        public long? Count { get; set; }
         public bool IsFolder { get; set; }
         public DateTimeOffset DateModified { get; set; }
     }
@@ -20,10 +22,10 @@ namespace DirSize
 
         IEnumerable<SimpleIoItemInfoStructure> GetFilesAndDirs(string drive);
         IEnumerable<string> GetFilesAndDirsRecursive(string drive);
-        long GetFolderSize(string path);
+        ByteSize GetFolderSize(string path);
 
-        (long totalElements, long totalBytesUsed) GetFolderSizeRecursive(
+        (long totalElements, ByteSize totalBytesUsed) GetFolderSizeRecursive(
             string path,
-            Action<(long additionalElementsCounted, long additionalBytesUsed)> sumBuilderProgressCallBack);
+            Action<(long additionalElementsCounted, ByteSize additionalBytesUsed)> sumBuilderProgressCallBack);
     }
 }

@@ -34,7 +34,7 @@
             this.freeSpaceStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.totalBytesCapacityStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.InfoItemStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.folderListView = new System.Windows.Forms.ListView();
+            this.folderListView = new FolderListView();
             this.panel1 = new System.Windows.Forms.Panel();
             this.currentPathLabel = new System.Windows.Forms.Label();
             this.statusStrip1.SuspendLayout();

@@ -53,9 +53,9 @@ namespace DirSize
                                     (ref FileSystemEntry entry) =>
                                     {
                                         additionalBytes += entry.Length;
-                                        if (itemCount++ % 100 == 0)
+                                        if (itemCount++ % 300 == 0)
                                         {
-                                            sumBuilderProgressCallBack.Invoke((100, new ByteSize(additionalBytes)));
+                                            sumBuilderProgressCallBack.Invoke((300, new ByteSize(additionalBytes)));
                                             additionalBytes = 0;
                                         }
                                         return entry.Length;

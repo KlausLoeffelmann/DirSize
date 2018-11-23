@@ -1,5 +1,6 @@
 ﻿using ByteSizeLib;
 using System;
+using System.Collections;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,17 @@ using System.Windows.Forms;
 
 namespace DirSize
 {
+    // We need this to avoid flickering.
+    // We patched the Designer Code to use this
+    // instead of System.Windows.Forms.ListView.
+    public class FolderListView : ListView
+    {
+        public FolderListView():base()
+        {
+            this.DoubleBuffered = true;
+        }
+    }
+
     public partial class MainForm : Form
     {
         private ToolStripButton _lastCheckedItem;
@@ -25,10 +37,13 @@ namespace DirSize
             folderListView.GridLines = true;
             folderListView.HideSelection = false;
             folderListView.FullRowSelect = true;
+            folderListView.Sorting = SortOrder.None;
 
             // It's not a real double click, but it'll do for our purposes.
-            folderListView.Activation = ItemActivation.TwoClick; 
+            folderListView.Activation = ItemActivation.TwoClick;
 
+            // Setting the width to -2 means the column width fits the Headlines.
+            // This is just initially.
             folderListView.Columns.Add(new ColumnHeader()
             {
                 Text = "Name",
@@ -63,6 +78,8 @@ namespace DirSize
                 Width = -2,
                 TextAlign = HorizontalAlignment.Left
             });
+
+            this.folderListView.ListViewItemSorter = new ListViewItemComparer();
         }
 
         protected override void OnLoad(EventArgs e)
@@ -206,72 +223,117 @@ namespace DirSize
                 folderListView.Items.Add(listViewItem);
             }
 
+            // Setting the width to -1 means, we're fitting the widest entry width.
             for (int columnCount = 0; columnCount < 3; columnCount++)
             {
                 folderListView.Columns[columnCount].Width = -1;
             }
 
+            // Let's give the UI time to breath and update what's need to be updated.
+            await Task.Delay(100);
+
             var totalFoldersProcessedUpdater = new Action<ByteSize>((additionallyUsedFolderBytes) =>
             {
                 Interlocked.Add(ref _totalFolderBytes, (long)additionallyUsedFolderBytes.Bytes);
-                statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text = $"Retrieving folder sizes: {new ByteSize(_totalFolderBytes)}"));
+                statusStrip1.Invoke(new Action(() => InfoItemStatusLabel.Text = $"Retrieving folder sizes: {new ByteSize(_totalFolderBytes)}"));
             });
+
+            var sortTriggerCounter = 0L;
 
             var blockAction = new Action<(ListViewItem lvItem, Action<ByteSize> updateAction)>((lvItemAndUpdater) =>
             {
                 var ioItemTemp = (SimpleIoItemInfoStructure)lvItemAndUpdater.lvItem.Tag;
-                if (ioItemTemp.IsFolder && ioItemTemp.Name!="..")
+                if (ioItemTemp.IsFolder && ioItemTemp.Name != "..")
                 {
                     var result = IoEnumService.GetFolderSizeRecursive(ioItemTemp.Path,
                                   (value) =>
                                   {
                                       // We print out the progress for each folder, while we're retrieving the data,
                                       // But only, if this is not the [..] Item to go up in the folder structure.
-                                      
-                                      folderListView.BeginInvoke(
-                                        new Action(() =>
-                                        {
-                                            var itemSum = ((long elements, ByteSize usedBytes))lvItemAndUpdater.lvItem.SubItems[3].Tag;
-                                            itemSum.elements += value.additionalElementsCounted;
-                                            itemSum.usedBytes += value.additionalBytesUsed;
-                                            lvItemAndUpdater.lvItem.SubItems[3].Text = itemSum.usedBytes.ToString();
-                                            lvItemAndUpdater.lvItem.SubItems[4].Text = itemSum.elements.ToString("#,##0");
-                                            lvItemAndUpdater.lvItem.SubItems[3].Tag = itemSum;
-                                            lvItemAndUpdater.updateAction.Invoke(value.additionalBytesUsed);
-                                        }));
+                                      folderListView.Invoke(
+                                            new Action(() =>
+                                            {
+                                                var itemSum = ((long elements, ByteSize usedBytes))lvItemAndUpdater.lvItem.SubItems[3].Tag;
+                                                itemSum.elements += value.additionalElementsCounted;
+                                                itemSum.usedBytes += value.additionalBytesUsed;
+                                                lvItemAndUpdater.lvItem.SubItems[3].Text = itemSum.usedBytes.ToString();
+                                                lvItemAndUpdater.lvItem.SubItems[4].Text = itemSum.elements.ToString("#,##0");
+                                                lvItemAndUpdater.lvItem.SubItems[3].Tag = itemSum;
+                                                lvItemAndUpdater.updateAction.Invoke(value.additionalBytesUsed);
+
+                                                if (sortTriggerCounter++ % 100 == 0)
+                                                {
+                                                    folderListView.Sort();
+                                                }
+                                            }));
                                   });
 
                     // We print out the result, once it's available.
-                    folderListView.BeginInvoke(
-                        new Action(() =>
-                        {
-                            lvItemAndUpdater.lvItem.SubItems[3].Text = result.totalBytesUsed.ToString();
-                            lvItemAndUpdater.lvItem.SubItems[4].Text = result.totalElements.ToString("#,##0");
-                        }));
+                    folderListView.Invoke(
+                            new Action(() =>
+                            {
+                                    // We need to update the Tag, because we need the final result here for sorting purposes
+                                    // for the Folder Sizes which are still gathered on other threads.
+                                    lvItemAndUpdater.lvItem.SubItems[3].Tag = result;
+                                lvItemAndUpdater.lvItem.SubItems[3].Text = result.totalBytesUsed.ToString();
+                                lvItemAndUpdater.lvItem.SubItems[4].Text = result.totalElements.ToString("#,##0");
+
+                                // And we need the final sort.
+                                folderListView.Sort();
+                            }));
                 }
             });
 
             _workerBlock = new ActionBlock<(ListViewItem, Action<ByteSize>)>(blockAction,
                                             new ExecutionDataflowBlockOptions()
                                             {
-                                                MaxDegreeOfParallelism = 4,
+                                                MaxDegreeOfParallelism = Environment.ProcessorCount / 2,
                                                 CancellationToken = _workerBlockCancellationTokenSource.Token
                                             });
 
+
             foreach (ListViewItem lvItem in folderListView.Items)
             {
-                var status = await _workerBlock.SendAsync((lvItem, totalFoldersProcessedUpdater));
+                var status = _workerBlock.Post((lvItem, totalFoldersProcessedUpdater));
             }
 
             _workerBlock.Complete();
+
             try
             {
                 await _workerBlock.Completion;
-                statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text = $"Done."));
+                statusStrip1.Invoke(new Action(() => InfoItemStatusLabel.Text = $"Done."));
             }
             catch (TaskCanceledException)
             {
-                statusStrip1.BeginInvoke(new Action(() => InfoItemStatusLabel.Text = $"Canceled."));
+                statusStrip1.Invoke(new Action(() => InfoItemStatusLabel.Text = $"Canceled."));
+            }
+        }
+    }
+
+    class ListViewItemComparer : IComparer
+    {
+        private int col;
+        public ListViewItemComparer()
+        {
+            col = 0;
+        }
+        public ListViewItemComparer(int column)
+        {
+            col = column;
+        }
+        public int Compare(object x, object y)
+        {
+            try
+            {
+                // null test is too expensive. Let's rather fail in that case and return 0.
+                var itemSum1 = ((long elements, ByteSize usedBytes))((ListViewItem)x).SubItems[3].Tag;
+                var itemSum2 = ((long elements, ByteSize usedBytes))((ListViewItem)y).SubItems[3].Tag;
+                return itemSum2.usedBytes.Bytes.CompareTo(itemSum1.usedBytes.Bytes);
+            }
+            catch (Exception)
+            {
+                return 0;
             }
         }
     }
